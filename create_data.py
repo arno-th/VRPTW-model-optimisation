@@ -3,6 +3,7 @@ import json
 def create_data_model():
     """Stores the data for the problem."""
     data = {}
+
     # Distance from node i to node j
     data['distance_matrix'] = [
         [
@@ -74,11 +75,26 @@ def create_data_model():
             536, 194, 798, 0
         ],
     ]
-    data['num_vehicles'] = 5
-    data['depot'] = 3
-    data['demands'] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
-    data['service_time'] = [1 for i in range(17)]
+    
+    data['node_demands'] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
+    
+    
     data['vehicle_capacities'] = [5, 15, 15, 15, 20]
+    data['fixed_vehicle_cost'] = [1, 1, 1, 1, 1]
+
+    # Counts of variables
+    data['counts'] = {
+        'depots': 3,
+        'vehicles': len(data['vehicle_capacities']),
+        'nodes': len(data['node_demands'])
+    }
+
+    # Generated data
+    data['vehicle_T_penalty'] = [1.0] * data['counts']['vehicles']
+    data['max_work_time'] = [8.0] * data['counts']['vehicles']
+    data['service_time'] = [1 for i in range(data['counts']['nodes'])]
+    data['node_T_penalty'] = [1.0] * data['counts']['nodes']
+
     data['time_matrix'] = [
         [0, 6, 9, 8, 7, 3, 6, 2, 3, 2, 6, 6, 4, 4, 5, 9, 7],
         [6, 0, 8, 3, 2, 6, 8, 4, 8, 8, 13, 7, 5, 8, 12, 10, 14],
@@ -98,7 +114,7 @@ def create_data_model():
         [9, 10, 18, 6, 8, 12, 15, 8, 13, 9, 13, 3, 4, 5, 9, 0, 9],
         [7, 14, 9, 16, 14, 8, 5, 10, 6, 5, 4, 10, 8, 6, 2, 9, 0]
     ]
-    data['time_windows'] = [
+    data['time_windows'] = [ # tuples in form (a,b)
         (0, 5),  # depot
         (7, 12),  # 1
         (10, 15),  # 2
@@ -117,9 +133,5 @@ def create_data_model():
         (10, 15),  # 15
         (11, 15),  # 16
     ]
-    data['node_T_penalty'] = [1.0] * len(data['demands'])
-    data['vehicle_T_penalty'] = [1.0] * data['num_vehicles']
-    data['max_work_time'] = [8.0] * data['num_vehicles']
-    data['fixed_vehicle_cost'] = [1, 1, 1, 1, 1]
     
     return data
