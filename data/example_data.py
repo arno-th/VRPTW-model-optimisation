@@ -4,6 +4,7 @@ def create_data_model():
     """Stores the data for the problem."""
     data = {}
 
+    data['labour_cost'] = 1
     # Distance from node i to node j
     data['distance_matrix'] = [
         [
