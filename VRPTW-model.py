@@ -2,15 +2,6 @@ import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
 import vrplib
 
-vrp_instance = vrplib.read_instance('./data/C101(25).txt', instance_format='solomon')
-time_matrix = vrp_instance['edge_weight']
-num_depots = 1
-fixed_vehicle_cost = 0
-tw_penalty_cost = [1.0] * len(vrp_instance['demand'])
-max_vehicle_work_time = [8.0] * vrp_instance['vehicles']
-vehicle_time_penalty_cost = [1.0] * vrp_instance['vehicles']
-labour_cost = 1
-
 ##############################################################################
 # Initialisation
 ##############################################################################
@@ -32,6 +23,15 @@ def get_node_vehicle_index(node_i, vehicle_v, num_vehicles):
 ##############################################################################
 # Parameters
 ##############################################################################
+vrp_instance = vrplib.read_instance('./data/C101(25).txt', instance_format='solomon')
+time_matrix = vrp_instance['edge_weight']
+num_depots = 1
+fixed_vehicle_cost = 0
+tw_penalty_cost = [999999] * len(vrp_instance['demand'])
+max_vehicle_work_time = [8.0] * vrp_instance['vehicles']
+vehicle_time_penalty_cost = [999999] * vrp_instance['vehicles']
+labour_cost = 1
+
 delta = 1
 phi_i = 1
 phi_v = 1
@@ -114,12 +114,35 @@ total_vehicle_cost = sum([
     for v in range(vrp_instance['vehicles'])
 ])
 total_node_cost = sum([tw_penalty_cost[i] * (early_service_vio_i[i+1] + late_service_vio_i[i+1]) for i in range(len(vrp_instance['demand']))])
-# model.obj = pyo.Objective(expr= total_vehicle_cost + total_node_cost, sense=pyo.minimize)
-model.obj = pyo.Objective(expr= total_node_cost, sense=pyo.minimize)
+model.obj = pyo.Objective(expr= total_vehicle_cost + total_node_cost, sense=pyo.minimize)
+# model.obj = pyo.Objective(expr= total_node_cost, sense=pyo.minimize)
 
 ##############################################################################
 # Constraints
 ##############################################################################
+# Constraint 1 is objective function
+
+# Constraint 2
+C2 = model.C2 = pyo.ConstraintList()
+for i in range(len(vrp_instance['demand'])):
+    vehicle_assignment = 0
+    for v in range(vrp_instance['vehicles']):
+        iv_index = get_node_vehicle_index(i, v, vrp_instance['vehicles'])
+        vehicle_assignment += Y_iv[iv_index+1]
+    C2.add(expr=
+        vehicle_assignment == 1
+    )
+
+# Constraint 3
+C3 = model.C3 = pyo.ConstraintList()
+for p in range(num_depots):
+    depot_assignment = 0
+    for v in range(vrp_instance['vehicles']):
+        vp_index = get_vehicle_depot_index(v, p, num_depots)
+        depot_assignment += X_pv[vp_index+1]
+    C3.add(expr=
+        depot_assignment == 1
+    )
 
 # Constraint 4
 C4 = model.C4 = pyo.ConstraintList()
@@ -128,8 +151,8 @@ for v in range(vrp_instance['vehicles']):
         for i in range(len(vrp_instance['demand'])):
             vp_index = get_vehicle_depot_index(v, p, num_depots)
             iv_index = get_node_vehicle_index(i, v, vrp_instance['vehicles'])
-            C4.add(expr= 
-                accum_cost_i[i+1] >= vrp_instance['edge_weight'][p][i] * 
+            C4.add(expr=
+                accum_cost_i[i+1] >= vrp_instance['edge_weight'][p][i] *
                 (X_pv[vp_index+1] +
                  Y_iv[iv_index+1]
                  -1
